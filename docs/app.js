@@ -35,6 +35,8 @@ const statusEl = document.getElementById('status');
 const startBtn = document.getElementById('start');
 const stopBtn = document.getElementById('stop');
 const downloadBtn = document.getElementById('download');
+const qrBtn = document.getElementById('qr');
+const qrBox = document.getElementById('qrs');
 const countInput = document.getElementById('count');
 const withAnswers = document.getElementById('withAnswers');
 
@@ -142,6 +144,7 @@ function finish(message) {
   startBtn.disabled = false;
   stopBtn.disabled = true;
   downloadBtn.disabled = results.length === 0;
+  qrBtn.disabled = results.length === 0;
   renderStatus(message);
   renderBars();
 }
@@ -188,6 +191,8 @@ startBtn.onclick = () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
   downloadBtn.disabled = true;
+  qrBtn.disabled = true;
+  qrBox.innerHTML = '';
   const n = Math.max(1, Math.min(8, (navigator.hardwareConcurrency || 4) - 1));
   for (let i = 0; i < n; i++) {
     const w = new Worker('worker.js');
@@ -205,9 +210,12 @@ startBtn.onclick = () => {
 
 stopBtn.onclick = () => finish('Stopped');
 
+function exportLines() {
+  return results.map(r => (withAnswers.checked ? [r.puzzle, r.type, r.answer].join('\t') : r.puzzle));
+}
+
 downloadBtn.onclick = () => {
-  const lines = results.map(r => (withAnswers.checked ? [r.puzzle, r.type, r.answer].join('\t') : r.puzzle));
-  const blob = new Blob([lines.join('\n') + '\n'], { type: 'text/plain' });
+  const blob = new Blob([exportLines().join('\n') + '\n'], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'fish_puzzles.txt';
@@ -215,4 +223,41 @@ downloadBtn.onclick = () => {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+
+const QR_BYTES = 1000;
+
+qrBtn.onclick = () => {
+  const chunks = [];
+  let cur = [];
+  let size = 0;
+  for (const line of exportLines()) {
+    if (cur.length && size + line.length + 1 > QR_BYTES) {
+      chunks.push(cur);
+      cur = [];
+      size = 0;
+    }
+    cur.push(line);
+    size += line.length + 1;
+  }
+  if (cur.length) chunks.push(cur);
+  qrBox.innerHTML = '';
+  let first = 1;
+  chunks.forEach((lines, i) => {
+    const qr = qrcode(0, 'L');
+    qr.addData(lines.join('\n'), 'Byte');
+    qr.make();
+    const fig = document.createElement('figure');
+    fig.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
+    const cap = document.createElement('figcaption');
+    const last = first + lines.length - 1;
+    cap.textContent = (chunks.length > 1 ? 'Code ' + (i + 1) + ' of ' + chunks.length + ': ' : '') + 'puzzles ' + first + '–' + last;
+    first = last + 1;
+    fig.appendChild(cap);
+    qrBox.appendChild(fig);
+  });
+};
+
+withAnswers.onchange = () => {
+  if (qrBox.children.length) qrBtn.onclick();
 };

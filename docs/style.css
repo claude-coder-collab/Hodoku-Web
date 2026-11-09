@@ -90,3 +90,8 @@ button:disabled { opacity: 0.5; cursor: default; }
 nav { display: flex; gap: 16px; margin-bottom: 14px; font-size: 0.95rem; }
 nav a { color: var(--muted); text-decoration: none; }
 nav a.here { color: var(--fg); font-weight: 600; }
+.qrs { display: grid; gap: 16px; margin-top: 16px; }
+.qrs:empty { display: none; }
+.qrs figure { margin: 0; text-align: center; }
+.qrs svg { width: 100%; max-width: 560px; height: auto; background: #fff; border-radius: 6px; }
+.qrs figcaption { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
