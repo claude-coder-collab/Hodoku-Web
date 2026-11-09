@@ -192,7 +192,7 @@ startBtn.onclick = () => {
   stopBtn.disabled = false;
   downloadBtn.disabled = true;
   qrBtn.disabled = true;
-  qrBox.innerHTML = '';
+  hideQr();
   const n = Math.max(1, Math.min(8, (navigator.hardwareConcurrency || 4) - 1));
   for (let i = 0; i < n; i++) {
     const w = new Worker('worker.js');
@@ -225,39 +225,40 @@ downloadBtn.onclick = () => {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
 
-const QR_BYTES = 1000;
+let qrIndex = -1;
 
-qrBtn.onclick = () => {
-  const chunks = [];
-  let cur = [];
-  let size = 0;
-  for (const line of exportLines()) {
-    if (cur.length && size + line.length + 1 > QR_BYTES) {
-      chunks.push(cur);
-      cur = [];
-      size = 0;
-    }
-    cur.push(line);
-    size += line.length + 1;
-  }
-  if (cur.length) chunks.push(cur);
+function showQr(i) {
+  const lines = exportLines();
+  if (!lines.length) return;
+  qrIndex = (i + lines.length) % lines.length;
+  const qr = qrcode(0, 'M');
+  qr.addData(lines[qrIndex], 'Byte');
+  qr.make();
+  qrBox.innerHTML =
+    '<figure></figure><div class="row qrnav"><button type="button">Previous</button><span></span><button type="button">Next</button><button type="button">Close</button></div>';
+  qrBox.querySelector('figure').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
+  qrBox.querySelector('span').textContent = 'Puzzle ' + (qrIndex + 1) + ' of ' + lines.length;
+  const [prev, next, close] = qrBox.querySelectorAll('button');
+  prev.onclick = () => showQr(qrIndex - 1);
+  next.onclick = () => showQr(qrIndex + 1);
+  close.onclick = hideQr;
+  prev.disabled = next.disabled = lines.length < 2;
+}
+
+function hideQr() {
+  qrIndex = -1;
   qrBox.innerHTML = '';
-  let first = 1;
-  chunks.forEach((lines, i) => {
-    const qr = qrcode(0, 'L');
-    qr.addData(lines.join('\n'), 'Byte');
-    qr.make();
-    const fig = document.createElement('figure');
-    fig.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
-    const cap = document.createElement('figcaption');
-    const last = first + lines.length - 1;
-    cap.textContent = (chunks.length > 1 ? 'Code ' + (i + 1) + ' of ' + chunks.length + ': ' : '') + 'puzzles ' + first + '–' + last;
-    first = last + 1;
-    fig.appendChild(cap);
-    qrBox.appendChild(fig);
-  });
-};
+}
+
+qrBtn.onclick = () => showQr(qrIndex < 0 ? 0 : qrIndex);
+
+document.addEventListener('keydown', e => {
+  if (qrIndex < 0 || e.target.matches('input[type=number]')) return;
+  if (e.key === 'ArrowLeft') showQr(qrIndex - 1);
+  else if (e.key === 'ArrowRight') showQr(qrIndex + 1);
+  else if (e.key === 'Escape') hideQr();
+});
 
 withAnswers.onchange = () => {
-  if (qrBox.children.length) qrBtn.onclick();
+  if (qrIndex >= 0) showQr(qrIndex);
 };
