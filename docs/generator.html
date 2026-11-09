@@ -36,13 +36,16 @@
       <button id="start" class="primary" type="button">Generate</button>
       <button id="stop" type="button" disabled>Stop</button>
       <button id="download" type="button" disabled>Download .txt</button>
+      <button id="qr" type="button" disabled>Show QR codes</button>
     </div>
     <div class="status" id="status"></div>
     <div class="bars" id="bars" style="margin-top:12px"></div>
+    <div class="qrs" id="qrs"></div>
   </section>
 
   <p class="note">Built from <a href="https://hodoku.sourceforge.net/">HoDoKu</a> 2.2.0 by Bernhard Hobiger (GPLv3), compiled to WebAssembly with <a href="https://teavm.org/">TeaVM</a>. Source and build scripts are in this repository.</p>
 </main>
+<script src="qrcode.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

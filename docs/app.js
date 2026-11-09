@@ -35,6 +35,8 @@ const statusEl = document.getElementById('status');
 const startBtn = document.getElementById('start');
 const stopBtn = document.getElementById('stop');
 const downloadBtn = document.getElementById('download');
+const qrBtn = document.getElementById('qr');
+const qrBox = document.getElementById('qrs');
 const countInput = document.getElementById('count');
 const withAnswers = document.getElementById('withAnswers');
 
@@ -142,6 +144,7 @@ function finish(message) {
   startBtn.disabled = false;
   stopBtn.disabled = true;
   downloadBtn.disabled = results.length === 0;
+  qrBtn.disabled = results.length === 0;
   renderStatus(message);
   renderBars();
 }
@@ -188,6 +191,8 @@ startBtn.onclick = () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
   downloadBtn.disabled = true;
+  qrBtn.disabled = true;
+  hideQr();
   const n = Math.max(1, Math.min(8, (navigator.hardwareConcurrency || 4) - 1));
   for (let i = 0; i < n; i++) {
     const w = new Worker('worker.js');
@@ -205,9 +210,12 @@ startBtn.onclick = () => {
 
 stopBtn.onclick = () => finish('Stopped');
 
+function exportLines() {
+  return results.map(r => (withAnswers.checked ? [r.puzzle, r.type, r.answer].join('\t') : r.puzzle));
+}
+
 downloadBtn.onclick = () => {
-  const lines = results.map(r => (withAnswers.checked ? [r.puzzle, r.type, r.answer].join('\t') : r.puzzle));
-  const blob = new Blob([lines.join('\n') + '\n'], { type: 'text/plain' });
+  const blob = new Blob([exportLines().join('\n') + '\n'], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'fish_puzzles.txt';
@@ -215,4 +223,42 @@ downloadBtn.onclick = () => {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+
+let qrIndex = -1;
+
+function showQr(i) {
+  const lines = exportLines();
+  if (!lines.length) return;
+  qrIndex = (i + lines.length) % lines.length;
+  const qr = qrcode(0, 'M');
+  qr.addData(lines[qrIndex], 'Byte');
+  qr.make();
+  qrBox.innerHTML =
+    '<figure></figure><div class="row qrnav"><button type="button">Previous</button><span></span><button type="button">Next</button><button type="button">Close</button></div>';
+  qrBox.querySelector('figure').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
+  qrBox.querySelector('span').textContent = 'Puzzle ' + (qrIndex + 1) + ' of ' + lines.length;
+  const [prev, next, close] = qrBox.querySelectorAll('button');
+  prev.onclick = () => showQr(qrIndex - 1);
+  next.onclick = () => showQr(qrIndex + 1);
+  close.onclick = hideQr;
+  prev.disabled = next.disabled = lines.length < 2;
+}
+
+function hideQr() {
+  qrIndex = -1;
+  qrBox.innerHTML = '';
+}
+
+qrBtn.onclick = () => showQr(qrIndex < 0 ? 0 : qrIndex);
+
+document.addEventListener('keydown', e => {
+  if (qrIndex < 0 || e.target.matches('input[type=number]')) return;
+  if (e.key === 'ArrowLeft') showQr(qrIndex - 1);
+  else if (e.key === 'ArrowRight') showQr(qrIndex + 1);
+  else if (e.key === 'Escape') hideQr();
+});
+
+withAnswers.onchange = () => {
+  if (qrIndex >= 0) showQr(qrIndex);
 };

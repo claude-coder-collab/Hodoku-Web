@@ -14,7 +14,7 @@ Live page: https://claude-coder-collab.github.io/Hodoku-Web/
 
 ## Generator
 
-The second page, https://claude-coder-collab.github.io/Hodoku-Web/generator.html, generates puzzles whose first advanced step is the chosen technique (X-Wing, Swordfish, Jellyfish; basic, finned, sashimi, etc.), wing (XY-Wing, XYZ-Wing, W-Wing) or turbot fish (Skyscraper, 2-String Kite, etc.), and exports them as a text file.
+The second page, https://claude-coder-collab.github.io/Hodoku-Web/generator.html, generates puzzles whose first advanced step is the chosen technique (X-Wing, Swordfish, Jellyfish; basic, finned, sashimi, etc.), wing (XY-Wing, XYZ-Wing, W-Wing) or turbot fish (Skyscraper, 2-String Kite, etc.), and exports them as a text file or as QR codes to scan with a phone, one puzzle per code, shown one at a time.
 
 ## How it works
 
@@ -31,6 +31,8 @@ cp target/js/fishgen.wasm ../docs/
 ```
 
 `web/prepare.py` strips the Swing GUI and file-based options from the upstream sources, inlines the English resource strings and adds `web/overlay`. The prepared sources are committed under `web/src/main/java`.
+
+`docs/qrcode.js` is qrcode-generator 2.0.4 by Kazuhiko Arase (MIT).
 
 `docs/wasm-gc-runtime.js` is the TeaVM runtime from `org/teavm/backend/wasm/wasm-gc-runtime.min.js` in `teavm-core`.
 
