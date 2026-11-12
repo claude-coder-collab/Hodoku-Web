@@ -248,21 +248,39 @@ downloadBtn.onclick = () => {
 let qrIndex = -1;
 
 function showQr(i) {
-  const lines = exportLines(true);
-  if (!lines.length) return;
-  qrIndex = (i + lines.length) % lines.length;
+  if (!results.length) return;
+  qrIndex = (i + results.length) % results.length;
+  const r = results[qrIndex];
+  const text = r.puzzle.replace(/\./g, '0');
   const qr = qrcode(0, 'M');
-  qr.addData(lines[qrIndex], 'Byte');
+  qr.addData(text, 'Byte');
   qr.make();
   qrBox.innerHTML =
-    '<figure></figure><div class="row qrnav"><button type="button">Previous</button><span></span><button type="button">Next</button><button type="button">Close</button></div>';
+    '<div class="qrtitle"></div><figure></figure><code class="qrpuzzle"></code><div class="qranswer"></div>' +
+    '<div class="row qrnav"><button type="button">Previous</button><span></span><button type="button">Next</button></div>' +
+    '<div class="row qrnav"><button type="button">Copy</button><a class="btnlink" target="_blank" rel="noopener">Open in hinter</a><button type="button">Close</button></div>';
+  qrBox.querySelector('.qrtitle').textContent = names[r.type] || r.type;
   qrBox.querySelector('figure').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
-  qrBox.querySelector('span').textContent = 'Puzzle ' + (qrIndex + 1) + ' of ' + lines.length;
-  const [prev, next, close] = qrBox.querySelectorAll('button');
+  qrBox.querySelector('.qrpuzzle').textContent = text;
+  qrBox.querySelector('.qranswer').textContent = r.answer || '';
+  qrBox.querySelector('span').textContent = 'Puzzle ' + (qrIndex + 1) + ' of ' + results.length;
+  qrBox.querySelector('a').href = './?p=' + encodeURIComponent(text);
+  const [prev, next, copy, close] = qrBox.querySelectorAll('button');
   prev.onclick = () => showQr(qrIndex - 1);
   next.onclick = () => showQr(qrIndex + 1);
   close.onclick = hideQr;
-  prev.disabled = next.disabled = lines.length < 2;
+  copy.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      copy.textContent = 'Copied';
+    } catch (err) {
+      copy.textContent = 'Copy failed';
+    }
+    setTimeout(() => {
+      copy.textContent = 'Copy';
+    }, 1500);
+  };
+  prev.disabled = next.disabled = results.length < 2;
 }
 
 function hideQr() {
@@ -278,7 +296,3 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowRight') showQr(qrIndex + 1);
   else if (e.key === 'Escape') hideQr();
 });
-
-withAnswers.onchange = () => {
-  if (qrIndex >= 0) showQr(qrIndex);
-};
