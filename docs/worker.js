@@ -20,8 +20,8 @@ async function loop() {
       const line = generate();
       tried++;
       if (!line) continue;
-      const [type, puzzle, answer] = line.split('\t');
-      found.push({ type, puzzle, answer });
+      const [type, puzzle, answer, level, score] = line.split('\t');
+      found.push({ type, puzzle, answer, level, score });
     }
     postMessage({ tried, found });
     tried = 0;

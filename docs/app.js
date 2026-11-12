@@ -256,10 +256,11 @@ function showQr(i) {
   qr.addData(text, 'Byte');
   qr.make();
   qrBox.innerHTML =
-    '<div class="qrtitle"></div><figure></figure><code class="qrpuzzle"></code><div class="qranswer"></div>' +
+    '<div class="qrtitle"></div><div class="qrgrade"></div><figure></figure><code class="qrpuzzle"></code><div class="qranswer"></div>' +
     '<div class="row qrnav"><button type="button">Previous</button><span></span><button type="button">Next</button></div>' +
     '<div class="row qrnav"><button type="button">Copy</button><a class="btnlink" target="_blank" rel="noopener">Open in hinter</a><button type="button">Close</button></div>';
   qrBox.querySelector('.qrtitle').textContent = names[r.type] || r.type;
+  qrBox.querySelector('.qrgrade').textContent = r.level ? 'HoDoKu grade: ' + r.level + ' (score ' + r.score + ')' : '';
   qrBox.querySelector('figure').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
   qrBox.querySelector('.qrpuzzle').textContent = text;
   qrBox.querySelector('.qranswer').textContent = r.answer || '';
