@@ -224,7 +224,7 @@ copyBtn.onclick = async () => {
   const text = exportLines(true).join('\n');
   const label = copyBtn.textContent;
   try {
-    await navigator.clipboard.writeText(text + '\n');
+    await navigator.clipboard.writeText(text);
     copyBtn.textContent = 'Copied';
   } catch (e) {
     copyBtn.textContent = 'Copy failed';
