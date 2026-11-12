@@ -213,17 +213,15 @@ startBtn.onclick = () => {
 
 stopBtn.onclick = () => finish('Stopped');
 
-function exportLines() {
-  return results.map(r => (withAnswers.checked ? [r.puzzle, r.type, r.answer].join('\t') : r.puzzle));
+function exportLines(zero) {
+  return results.map(r => {
+    const p = zero ? r.puzzle.replace(/\./g, '0') : r.puzzle;
+    return withAnswers.checked ? [p, r.type, r.answer].join('\t') : p;
+  });
 }
 
 copyBtn.onclick = async () => {
-  const text = results
-    .map(r => {
-      const p = r.puzzle.replace(/\./g, '0');
-      return withAnswers.checked ? [p, r.type, r.answer].join('\t') : p;
-    })
-    .join('\n');
+  const text = exportLines(true).join('\n');
   const label = copyBtn.textContent;
   try {
     await navigator.clipboard.writeText(text + '\n');
@@ -250,7 +248,7 @@ downloadBtn.onclick = () => {
 let qrIndex = -1;
 
 function showQr(i) {
-  const lines = exportLines();
+  const lines = exportLines(true);
   if (!lines.length) return;
   qrIndex = (i + lines.length) % lines.length;
   const qr = qrcode(0, 'M');
