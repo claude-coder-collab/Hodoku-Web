@@ -36,6 +36,7 @@ const startBtn = document.getElementById('start');
 const stopBtn = document.getElementById('stop');
 const downloadBtn = document.getElementById('download');
 const qrBtn = document.getElementById('qr');
+const copyBtn = document.getElementById('copy');
 const qrBox = document.getElementById('qrs');
 const countInput = document.getElementById('count');
 const withAnswers = document.getElementById('withAnswers');
@@ -144,6 +145,7 @@ function finish(message) {
   startBtn.disabled = false;
   stopBtn.disabled = true;
   downloadBtn.disabled = results.length === 0;
+  copyBtn.disabled = results.length === 0;
   qrBtn.disabled = results.length === 0;
   renderStatus(message);
   renderBars();
@@ -191,6 +193,7 @@ startBtn.onclick = () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
   downloadBtn.disabled = true;
+  copyBtn.disabled = true;
   qrBtn.disabled = true;
   hideQr();
   const n = Math.max(1, Math.min(8, (navigator.hardwareConcurrency || 4) - 1));
@@ -213,6 +216,25 @@ stopBtn.onclick = () => finish('Stopped');
 function exportLines() {
   return results.map(r => (withAnswers.checked ? [r.puzzle, r.type, r.answer].join('\t') : r.puzzle));
 }
+
+copyBtn.onclick = async () => {
+  const text = results
+    .map(r => {
+      const p = r.puzzle.replace(/\./g, '0');
+      return withAnswers.checked ? [p, r.type, r.answer].join('\t') : p;
+    })
+    .join('\n');
+  const label = copyBtn.textContent;
+  try {
+    await navigator.clipboard.writeText(text + '\n');
+    copyBtn.textContent = 'Copied';
+  } catch (e) {
+    copyBtn.textContent = 'Copy failed';
+  }
+  setTimeout(() => {
+    copyBtn.textContent = label;
+  }, 1500);
+};
 
 downloadBtn.onclick = () => {
   const blob = new Blob([exportLines().join('\n') + '\n'], { type: 'text/plain' });
