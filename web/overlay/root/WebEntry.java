@@ -12,6 +12,8 @@ import sudoku.Sudoku2;
 public class WebEntry {
     private static SudokuGenerator generator;
     private static SudokuSolver solver;
+    private static SudokuSolver rater;
+    private static StepConfig[] fullSteps;
 
     private static boolean isTarget(SolutionType t) {
         switch (t) {
@@ -60,19 +62,27 @@ public class WebEntry {
         Sudoku2 s = puzzle.clone();
         for (int guard = 0; guard < 400; guard++) {
             SolutionStep step = solver.getHint(s, false);
-            if (step == null) {
-                return "";
+            SolutionType t = step == null ? null : step.getType();
+            if (t == null || !isEasy(t) && !isTarget(t)) {
+                String m = MWing.find(s);
+                return m == null ? "" : "M_WING\t" + clues + "\t" + m + "\t" + rate(puzzle);
             }
-            SolutionType t = step.getType();
             if (isTarget(t)) {
-                return t.name() + "\t" + clues + "\t" + step.toString(2);
-            }
-            if (!isEasy(t)) {
-                return "";
+                return t.name() + "\t" + clues + "\t" + step.toString(2) + "\t" + rate(puzzle);
             }
             solver.doStep(s, step);
         }
         return "";
+    }
+
+    private static String rate(Sudoku2 puzzle) {
+        if (rater == null) {
+            rater = SudokuSolverFactory.getDefaultSolverInstance();
+            fullSteps = Options.getInstance().copyStepConfigs(Options.DEFAULT_SOLVER_STEPS, false, false, false);
+        }
+        Sudoku2 s = puzzle.clone();
+        rater.solveWithSteps(s, fullSteps);
+        return rater.getLevelString() + "\t" + rater.getScore();
     }
 
     private static void init() {

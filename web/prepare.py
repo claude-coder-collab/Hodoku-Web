@@ -137,7 +137,8 @@ for sub in ("shim", "sudoku"):
     os.makedirs(os.path.join(JAVA, sub), exist_ok=True)
     for f in glob.glob(os.path.join(HERE, "overlay", sub, "*.java")):
         shutil.copy(f, os.path.join(JAVA, sub))
-shutil.copy(os.path.join(HERE, "overlay", "root", "WebEntry.java"), JAVA)
+for f in glob.glob(os.path.join(HERE, "overlay", "root", "*.java")):
+    shutil.copy(f, JAVA)
 
 
 def options(s):

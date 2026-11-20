@@ -62,15 +62,13 @@ public class WebEntry {
         Sudoku2 s = puzzle.clone();
         for (int guard = 0; guard < 400; guard++) {
             SolutionStep step = solver.getHint(s, false);
-            if (step == null) {
-                return "";
+            SolutionType t = step == null ? null : step.getType();
+            if (t == null || !isEasy(t) && !isTarget(t)) {
+                String m = MWing.find(s);
+                return m == null ? "" : "M_WING\t" + clues + "\t" + m + "\t" + rate(puzzle);
             }
-            SolutionType t = step.getType();
             if (isTarget(t)) {
                 return t.name() + "\t" + clues + "\t" + step.toString(2) + "\t" + rate(puzzle);
-            }
-            if (!isEasy(t)) {
-                return "";
             }
             solver.doStep(s, step);
         }
