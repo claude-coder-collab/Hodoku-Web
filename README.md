@@ -38,4 +38,4 @@ cp target/js/fishgen.wasm ../docs/
 
 `FishGen.java` is the original command-line harness used to build `fish_puzzles.txt`.
 
-HoDoKu has no M-Wing, so `web/overlay/root/MWing.java` searches for one when the generator stalls: a bivalue cell {x,y}, a cell that sees it with y, a strong link on y to a cell with x, and a strong link on x to a final cell. x is eliminated from cells that see both the bivalue cell and the final cell. The hinter shows these as chains.
+HoDoKu has no M-Wing, so `web/overlay/root/MWing.java` searches for one when the generator stalls: a bivalue cell {x,y}, a cell that sees it with y, a strong link on y to a cell with x, and a strong link on x to a final cell. x is eliminated from cells that see both the bivalue cell and the final cell. A puzzle is kept only if HoDoKu's chain finders (X/XY-chains, nice loops, AICs) find a chain through the same four cells with the same eliminations; that step is added to the answer.
