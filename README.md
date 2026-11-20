@@ -14,7 +14,7 @@ Live page: https://claude-coder-collab.github.io/Hodoku-Web/
 
 ## Generator
 
-The second page, https://claude-coder-collab.github.io/Hodoku-Web/generator.html, generates puzzles whose first advanced step is the chosen technique (X-Wing, Swordfish, Jellyfish; basic, finned, sashimi, etc.), wing (XY-Wing, XYZ-Wing, W-Wing) or turbot fish (Skyscraper, 2-String Kite, etc.), and exports them as a text file or as QR codes to scan with a phone, one puzzle per code, shown one at a time.
+The second page, https://claude-coder-collab.github.io/Hodoku-Web/generator.html, generates puzzles whose first advanced step is the chosen technique (X-Wing, Swordfish, Jellyfish; basic, finned, sashimi, etc.), wing (XY-Wing, XYZ-Wing, W-Wing, M-Wing) or turbot fish (Skyscraper, 2-String Kite, etc.), and exports them as a text file or as QR codes to scan with a phone, one puzzle per code, shown one at a time.
 
 ## How it works
 
@@ -37,3 +37,5 @@ cp target/js/fishgen.wasm ../docs/
 `docs/wasm-gc-runtime.js` is the TeaVM runtime from `org/teavm/backend/wasm/wasm-gc-runtime.min.js` in `teavm-core`.
 
 `FishGen.java` is the original command-line harness used to build `fish_puzzles.txt`.
+
+HoDoKu has no M-Wing, so `web/overlay/root/MWing.java` searches for one when the generator stalls: a bivalue cell {x,y}, a cell that sees it with y, a strong link on y to a cell with x, and a strong link on x to a final cell. x is eliminated from cells that see both the bivalue cell and the final cell. The hinter shows these as chains.

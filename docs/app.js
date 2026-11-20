@@ -17,7 +17,8 @@ const VARIANTS = [
 const WINGS = [
   { key: 'XY_WING', label: 'XY-Wing' },
   { key: 'XYZ_WING', label: 'XYZ-Wing' },
-  { key: 'W_WING', label: 'W-Wing' }
+  { key: 'W_WING', label: 'W-Wing' },
+  { key: 'M_WING', label: 'M-Wing' }
 ];
 
 const TURBOT = [
@@ -94,7 +95,7 @@ function addRows(table, items, perRow) {
   }
 }
 
-addRows(wingGrid, WINGS, 3);
+addRows(wingGrid, WINGS, 4);
 addRows(document.getElementById('turbot'), TURBOT, 4);
 
 const boxes = () => Array.from(document.querySelectorAll('table input[type=checkbox]'));
