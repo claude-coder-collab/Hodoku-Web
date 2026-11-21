@@ -151,6 +151,23 @@ function applyAllSingles() {
   setState(next, true);
 }
 
+function applyAllDeletions(idxs) {
+  const next = clone(state);
+  let changed = false;
+  for (const index of idxs) {
+    for (const [i, c] of steps[index].del) {
+      const bit = 1 << (c - 1);
+      if (next.masks[i] & bit) {
+        next.masks[i] &= ~bit;
+        changed = true;
+      }
+    }
+  }
+  if (!changed) return;
+  pushHistory();
+  setState(next, true);
+}
+
 function stepsFor(values, masks) {
   return { values: values.join(''), masks: masks.join(',') };
 }
@@ -269,14 +286,15 @@ function renderSteps() {
       }
     };
     head.lastChild.textContent = g.idxs.length;
-    if (g.cat === 'Singles') {
+    if (g.cat === 'Singles' || g.cat === 'Intersections' || g.cat === 'Subsets') {
       const all = document.createElement('button');
       all.type = 'button';
       all.className = 'applyall';
       all.textContent = 'Apply all';
       all.onclick = e => {
         e.stopPropagation();
-        applyAllSingles();
+        if (g.cat === 'Singles') applyAllSingles();
+        else applyAllDeletions(g.idxs);
       };
       head.insertBefore(all, head.lastChild);
     }
