@@ -87,6 +87,7 @@ public class MWing {
             for (int i = ch.getStart(); i <= ch.getEnd(); i++) {
                 got.add(Chain.getSCellIndex(nodes[i]));
             }
+            for (int i = 6; i < m.length; i++) got.remove(m[i]);
             if (got.equals(want)) return true;
         }
         return false;
