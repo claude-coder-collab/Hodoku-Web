@@ -151,21 +151,25 @@ function applyAllSingles() {
   setState(next, true);
 }
 
-function applyAllDeletions(idxs) {
-  const next = clone(state);
-  let changed = false;
-  for (const index of idxs) {
-    for (const [i, c] of steps[index].del) {
-      const bit = 1 << (c - 1);
-      if (next.masks[i] & bit) {
-        next.masks[i] &= ~bit;
-        changed = true;
-      }
+function applyAllDeletions(cat) {
+  const base = state;
+  const w = new Worker('hinter-worker.js');
+  w.onmessage = event => {
+    w.terminate();
+    const msg = event.data;
+    if (state !== base) return;
+    if (msg.error) {
+      progressEl.textContent = 'Error: ' + msg.error;
+      return;
     }
-  }
-  if (!changed) return;
-  pushHistory();
-  setState(next, true);
+    if (msg.masks.every((m, i) => m === state.masks[i])) return;
+    pushHistory();
+    const next = clone(state);
+    next.masks = msg.masks;
+    setState(next, true);
+  };
+  const payload = stepsFor(state.values, state.masks);
+  w.postMessage({ values: payload.values, masks: payload.masks, applyAll: cat });
 }
 
 function stepsFor(values, masks) {
@@ -294,7 +298,7 @@ function renderSteps() {
       all.onclick = e => {
         e.stopPropagation();
         if (g.cat === 'Singles') applyAllSingles();
-        else applyAllDeletions(g.idxs);
+        else applyAllDeletions(g.cat);
       };
       head.insertBefore(all, head.lastChild);
     }

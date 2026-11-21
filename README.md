@@ -8,7 +8,7 @@ Live page: https://claude-coder-collab.github.io/Hodoku-Web/
 
 - Finds all available steps, with the technique named and explained.
 - Draws patterns, eliminations and chains on the board.
-- Filter steps by technique group; apply any step, or apply all Singles, Intersections or Subsets at once.
+- Filter steps by technique group; apply any step, or apply all Singles, Intersections or Subsets repeatedly until none are left.
 - Undo and redo.
 - Kraken fish, forcing chains and forcing nets are optional because they are slow.
 
