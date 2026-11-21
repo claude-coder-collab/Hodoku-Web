@@ -99,6 +99,11 @@ public class WebEntry {
         return Hinter.findPhase(values, masks, phase, heavy);
     }
 
+    @JSExport
+    public static String applyAll(String values, String masks, String cat) {
+        return Hinter.applyAll(values, masks, cat);
+    }
+
     public static void main(String[] args) {
     }
 }

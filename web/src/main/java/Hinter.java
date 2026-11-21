@@ -150,6 +150,54 @@ public class Hinter {
         return steps;
     }
 
+    public static String applyAll(String values, String masks, String cat) {
+        init();
+        int[] m = new int[81];
+        String[] parts = masks.split(",");
+        for (int i = 0; i < 81; i++) {
+            m[i] = Integer.parseInt(parts[i]);
+        }
+        try {
+            for (int guard = 0; guard < 200; guard++) {
+                StringBuilder cur = new StringBuilder();
+                for (int i = 0; i < 81; i++) {
+                    if (i > 0) {
+                        cur.append(',');
+                    }
+                    cur.append(m[i]);
+                }
+                Sudoku2 sudoku = make(values, cur.toString());
+                boolean changed = false;
+                for (SolutionStep st : phase(sudoku, 0, false)) {
+                    StepConfig sc = st.getType().getStepConfig();
+                    if (st.getType().isSingle() || sc == null || !cat.equals(sc.getCategoryName())) {
+                        continue;
+                    }
+                    for (Candidate c : st.getCandidatesToDelete()) {
+                        int bit = 1 << (c.getValue() - 1);
+                        if ((m[c.getIndex()] & bit) != 0) {
+                            m[c.getIndex()] &= ~bit;
+                            changed = true;
+                        }
+                    }
+                }
+                if (!changed) {
+                    break;
+                }
+            }
+        } catch (RuntimeException e) {
+            return "{\"error\":" + quote(String.valueOf(e)) + "}";
+        }
+        StringBuilder out = new StringBuilder("{\"masks\":[");
+        for (int i = 0; i < 81; i++) {
+            if (i > 0) {
+                out.append(',');
+            }
+            out.append(m[i]);
+        }
+        return out.append("]}").toString();
+    }
+
     public static String findPhase(String values, String masks, int phase, boolean heavy) {
         init();
         StringBuilder out = new StringBuilder();

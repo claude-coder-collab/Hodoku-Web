@@ -151,6 +151,27 @@ function applyAllSingles() {
   setState(next, true);
 }
 
+function applyAllDeletions(cat) {
+  const base = state;
+  const w = new Worker('hinter-worker.js');
+  w.onmessage = event => {
+    w.terminate();
+    const msg = event.data;
+    if (state !== base) return;
+    if (msg.error) {
+      progressEl.textContent = 'Error: ' + msg.error;
+      return;
+    }
+    if (msg.masks.every((m, i) => m === state.masks[i])) return;
+    pushHistory();
+    const next = clone(state);
+    next.masks = msg.masks;
+    setState(next, true);
+  };
+  const payload = stepsFor(state.values, state.masks);
+  w.postMessage({ values: payload.values, masks: payload.masks, applyAll: cat });
+}
+
 function stepsFor(values, masks) {
   return { values: values.join(''), masks: masks.join(',') };
 }
@@ -269,14 +290,15 @@ function renderSteps() {
       }
     };
     head.lastChild.textContent = g.idxs.length;
-    if (g.cat === 'Singles') {
+    if (g.cat === 'Singles' || g.cat === 'Intersections' || g.cat === 'Subsets') {
       const all = document.createElement('button');
       all.type = 'button';
       all.className = 'applyall';
       all.textContent = 'Apply all';
       all.onclick = e => {
         e.stopPropagation();
-        applyAllSingles();
+        if (g.cat === 'Singles') applyAllSingles();
+        else applyAllDeletions(g.cat);
       };
       head.insertBefore(all, head.lastChild);
     }

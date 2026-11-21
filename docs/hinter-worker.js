@@ -11,6 +11,10 @@ async function init() {
 onmessage = async event => {
   const msg = event.data;
   await init();
+  if (msg.applyAll) {
+    postMessage(JSON.parse(api.applyAll(msg.values, msg.masks, msg.applyAll)));
+    return;
+  }
   for (let phase = 0; phase <= 26; phase++) {
     const result = JSON.parse(api.findPhase(msg.values, msg.masks, phase, msg.heavy));
     if (result.error) {
