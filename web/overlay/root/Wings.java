@@ -20,42 +20,34 @@ public class Wings {
         return a != b && Sudoku2.buddies[a].contains(b);
     }
 
-    private static void partner(Sudoku2 s, int from, int digit, int[] out) {
+    private static boolean has(Sudoku2 s, int i, int d) {
+        return s.getValue(i) == 0 && s.isCandidate(i, d);
+    }
+
+    private static List<Integer> partners(Sudoku2 s, int from, int digit) {
+        List<Integer> out = new ArrayList<>();
         for (int u = 0; u < 3; u++) {
             int other = -1;
             int n = 0;
             for (int c : Sudoku2.ALL_UNITS[Sudoku2.CONSTRAINTS[from][u]]) {
-                if (s.getValue(c) == 0 && s.isCandidate(c, digit)) {
+                if (has(s, c, digit)) {
                     n++;
                     if (c != from) other = c;
                 }
             }
-            out[u] = n == 2 ? other : -1;
+            if (n == 2 && !out.contains(other)) out.add(other);
         }
+        return out;
     }
 
-    private static void tail(Sudoku2 s, int a, int b, int x, int y, List<int[]> res) {
-        int[] p1 = new int[3];
-        int[] p2 = new int[3];
-        partner(s, b, y, p1);
-        for (int c : p1) {
-            if (c < 0 || c == a || !s.isCandidate(c, x)) continue;
-            partner(s, c, x, p2);
-            for (int d : p2) {
-                if (d < 0 || d == a || d == b) continue;
-                List<Integer> elim = new ArrayList<>();
-                for (int e = 0; e < 81; e++) {
-                    if (e != a && e != d && s.getValue(e) == 0 && s.isCandidate(e, x) && sees(e, a) && sees(e, d)) {
-                        elim.add(e);
-                    }
-                }
-                if (elim.isEmpty()) continue;
-                int[] m = new int[6 + elim.size()];
-                m[0] = a; m[1] = b; m[2] = c; m[3] = d; m[4] = x; m[5] = y;
-                for (int i = 0; i < elim.size(); i++) m[6 + i] = elim.get(i);
-                res.add(m);
-            }
+    private static int[] wing(int a, int b, int c, int d, int x, int y, int z, List<int[]> del) {
+        int[] w = new int[7 + 2 * del.size()];
+        w[0] = a; w[1] = b; w[2] = c; w[3] = d; w[4] = x; w[5] = y; w[6] = z;
+        for (int i = 0; i < del.size(); i++) {
+            w[7 + 2 * i] = del.get(i)[0];
+            w[8 + 2 * i] = del.get(i)[1];
         }
+        return w;
     }
 
     private static List<int[]> findM(Sudoku2 s) {
@@ -67,7 +59,18 @@ public class Wings {
                 int x = ab[k];
                 int y = ab[1 - k];
                 for (int b = 0; b < 81; b++) {
-                    if (sees(a, b) && s.getValue(b) == 0 && s.isCandidate(b, y)) tail(s, a, b, x, y, res);
+                    if (!sees(a, b) || !has(s, b, y)) continue;
+                    for (int c : partners(s, b, y)) {
+                        if (c == a || !has(s, c, x)) continue;
+                        for (int d : partners(s, c, x)) {
+                            if (d == a || d == b) continue;
+                            List<int[]> del = new ArrayList<>();
+                            for (int e = 0; e < 81; e++) {
+                                if (e != a && e != d && has(s, e, x) && sees(e, a) && sees(e, d)) del.add(new int[] {e, x});
+                            }
+                            if (!del.isEmpty()) res.add(wing(a, b, c, d, x, y, x, del));
+                        }
+                    }
                 }
             }
         }
@@ -76,17 +79,25 @@ public class Wings {
 
     private static List<int[]> findL(Sudoku2 s) {
         List<int[]> res = new ArrayList<>();
-        int[] p0 = new int[3];
         for (int a = 0; a < 81; a++) {
-            if (s.getValue(a) != 0) continue;
             for (int x = 1; x <= 9; x++) {
-                if (!s.isCandidate(a, x)) continue;
-                partner(s, a, x, p0);
-                for (int u = 0; u < 3; u++) {
-                    int b = p0[u];
-                    if (b < 0 || (u > 0 && (b == p0[0] || (u > 1 && b == p0[1])))) continue;
+                if (!has(s, a, x)) continue;
+                for (int b : partners(s, a, x)) {
                     for (int y = 1; y <= 9; y++) {
-                        if (y != x && s.isCandidate(b, y)) tail(s, a, b, x, y, res);
+                        if (y == x || !has(s, b, y)) continue;
+                        for (int c : partners(s, b, y)) {
+                            if (c == a) continue;
+                            for (int z = 1; z <= 9; z++) {
+                                if (z == x || z == y || !has(s, c, z)) continue;
+                                for (int d : partners(s, c, z)) {
+                                    if (d == a || d == b || !sees(a, d)) continue;
+                                    List<int[]> del = new ArrayList<>();
+                                    if (has(s, a, z)) del.add(new int[] {a, z});
+                                    if (has(s, d, x)) del.add(new int[] {d, x});
+                                    if (!del.isEmpty()) res.add(wing(a, b, c, d, x, y, z, del));
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -94,23 +105,25 @@ public class Wings {
         return res;
     }
 
-    private static boolean matches(SolutionStep step, int[] m) {
+    private static boolean matches(SolutionStep step, int[] w) {
         Set<Integer> del = new HashSet<>();
         for (Candidate cand : step.getCandidatesToDelete()) {
-            if (cand.getValue() == m[4]) del.add(cand.getIndex());
-        }
-        for (int i = 6; i < m.length; i++) {
-            if (!del.contains(m[i])) return false;
+            del.add(cand.getIndex() * 10 + cand.getValue());
         }
         Set<Integer> want = new HashSet<>();
-        for (int i = 0; i < 4; i++) want.add(m[i]);
+        for (int i = 0; i < 4; i++) want.add(w[i]);
+        Set<Integer> extra = new HashSet<>();
+        for (int i = 7; i < w.length; i += 2) {
+            if (!del.contains(w[i] * 10 + w[i + 1])) return false;
+            if (!want.contains(w[i])) extra.add(w[i]);
+        }
         for (Chain ch : step.getChains()) {
             Set<Integer> got = new HashSet<>();
             int[] nodes = ch.getChain();
             for (int i = ch.getStart(); i <= ch.getEnd(); i++) {
                 got.add(Chain.getSCellIndex(nodes[i]));
             }
-            for (int i = 6; i < m.length; i++) got.remove(m[i]);
+            got.removeAll(extra);
             if (got.equals(want)) return true;
         }
         return false;
@@ -118,14 +131,14 @@ public class Wings {
 
     private static String describe(boolean m, int[] w) {
         StringBuilder e = new StringBuilder();
-        for (int i = 6; i < w.length; i++) {
-            if (e.length() > 0) e.append(',');
-            e.append(cell(w[i]));
+        for (int i = 7; i < w.length; i += 2) {
+            if (e.length() > 0) e.append(", ");
+            e.append(cell(w[i])).append("<>").append(w[i + 1]);
         }
         String head = m
                 ? "M-Wing: " + w[4] + "/" + w[5] + " in " + cell(w[0]) + ", " + w[5] + " " + cell(w[1]) + "=" + cell(w[2])
                 : "L-Wing: " + w[4] + " " + cell(w[0]) + "=" + cell(w[1]) + ", " + w[5] + " " + cell(w[1]) + "=" + cell(w[2]);
-        return head + ", " + w[4] + " " + cell(w[2]) + "=" + cell(w[3]) + " => " + e + "<>" + w[4];
+        return head + ", " + w[6] + " " + cell(w[2]) + "=" + cell(w[3]) + " => " + e;
     }
 
     public static String find(Sudoku2 s, boolean m) {
