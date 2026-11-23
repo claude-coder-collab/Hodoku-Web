@@ -9,7 +9,7 @@ import sudoku.Chain;
 import sudoku.SolutionStep;
 import sudoku.Sudoku2;
 
-public class MWing {
+public class Wings {
     private static SudokuStepFinder finder;
 
     private static String cell(int i) {
@@ -34,10 +34,32 @@ public class MWing {
         }
     }
 
-    private static List<int[]> findAll(Sudoku2 s) {
-        List<int[]> res = new ArrayList<>();
+    private static void tail(Sudoku2 s, int a, int b, int x, int y, List<int[]> res) {
         int[] p1 = new int[3];
         int[] p2 = new int[3];
+        partner(s, b, y, p1);
+        for (int c : p1) {
+            if (c < 0 || c == a || !s.isCandidate(c, x)) continue;
+            partner(s, c, x, p2);
+            for (int d : p2) {
+                if (d < 0 || d == a || d == b) continue;
+                List<Integer> elim = new ArrayList<>();
+                for (int e = 0; e < 81; e++) {
+                    if (e != a && e != d && s.getValue(e) == 0 && s.isCandidate(e, x) && sees(e, a) && sees(e, d)) {
+                        elim.add(e);
+                    }
+                }
+                if (elim.isEmpty()) continue;
+                int[] m = new int[6 + elim.size()];
+                m[0] = a; m[1] = b; m[2] = c; m[3] = d; m[4] = x; m[5] = y;
+                for (int i = 0; i < elim.size(); i++) m[6 + i] = elim.get(i);
+                res.add(m);
+            }
+        }
+    }
+
+    private static List<int[]> findM(Sudoku2 s) {
+        List<int[]> res = new ArrayList<>();
         for (int a = 0; a < 81; a++) {
             if (s.getValue(a) != 0 || s.getAnzCandidates(a) != 2) continue;
             int[] ab = s.getAllCandidates(a);
@@ -45,25 +67,26 @@ public class MWing {
                 int x = ab[k];
                 int y = ab[1 - k];
                 for (int b = 0; b < 81; b++) {
-                    if (!sees(a, b) || s.getValue(b) != 0 || !s.isCandidate(b, y)) continue;
-                    partner(s, b, y, p1);
-                    for (int c : p1) {
-                        if (c < 0 || c == a || !s.isCandidate(c, x)) continue;
-                        partner(s, c, x, p2);
-                        for (int d : p2) {
-                            if (d < 0 || d == a || d == b) continue;
-                            List<Integer> elim = new ArrayList<>();
-                            for (int e = 0; e < 81; e++) {
-                                if (e != a && e != d && s.getValue(e) == 0 && s.isCandidate(e, x) && sees(e, a) && sees(e, d)) {
-                                    elim.add(e);
-                                }
-                            }
-                            if (elim.isEmpty()) continue;
-                            int[] m = new int[6 + elim.size()];
-                            m[0] = a; m[1] = b; m[2] = c; m[3] = d; m[4] = x; m[5] = y;
-                            for (int i = 0; i < elim.size(); i++) m[6 + i] = elim.get(i);
-                            res.add(m);
-                        }
+                    if (sees(a, b) && s.getValue(b) == 0 && s.isCandidate(b, y)) tail(s, a, b, x, y, res);
+                }
+            }
+        }
+        return res;
+    }
+
+    private static List<int[]> findL(Sudoku2 s) {
+        List<int[]> res = new ArrayList<>();
+        int[] p0 = new int[3];
+        for (int a = 0; a < 81; a++) {
+            if (s.getValue(a) != 0) continue;
+            for (int x = 1; x <= 9; x++) {
+                if (!s.isCandidate(a, x)) continue;
+                partner(s, a, x, p0);
+                for (int u = 0; u < 3; u++) {
+                    int b = p0[u];
+                    if (b < 0 || (u > 0 && (b == p0[0] || (u > 1 && b == p0[1])))) continue;
+                    for (int y = 1; y <= 9; y++) {
+                        if (y != x && s.isCandidate(b, y)) tail(s, a, b, x, y, res);
                     }
                 }
             }
@@ -93,8 +116,20 @@ public class MWing {
         return false;
     }
 
-    public static String find(Sudoku2 s) {
-        List<int[]> all = findAll(s);
+    private static String describe(boolean m, int[] w) {
+        StringBuilder e = new StringBuilder();
+        for (int i = 6; i < w.length; i++) {
+            if (e.length() > 0) e.append(',');
+            e.append(cell(w[i]));
+        }
+        String head = m
+                ? "M-Wing: " + w[4] + "/" + w[5] + " in " + cell(w[0]) + ", " + w[5] + " " + cell(w[1]) + "=" + cell(w[2])
+                : "L-Wing: " + w[4] + " " + cell(w[0]) + "=" + cell(w[1]) + ", " + w[5] + " " + cell(w[1]) + "=" + cell(w[2]);
+        return head + ", " + w[4] + " " + cell(w[2]) + "=" + cell(w[3]) + " => " + e + "<>" + w[4];
+    }
+
+    public static String find(Sudoku2 s, boolean m) {
+        List<int[]> all = m ? findM(s) : findL(s);
         if (all.isEmpty()) return null;
         if (finder == null) {
             finder = SudokuSolverFactory.getDefaultSolverInstance().getStepFinder();
@@ -102,17 +137,9 @@ public class MWing {
         List<SolutionStep> steps = new ArrayList<>();
         steps.addAll(finder.getAllChains(s));
         steps.addAll(finder.getAllNiceLoops(s));
-        for (int[] m : all) {
+        for (int[] w : all) {
             for (SolutionStep step : steps) {
-                if (!matches(step, m)) continue;
-                StringBuilder e = new StringBuilder();
-                for (int i = 6; i < m.length; i++) {
-                    if (e.length() > 0) e.append(',');
-                    e.append(cell(m[i]));
-                }
-                return "M-Wing: " + m[4] + "/" + m[5] + " in " + cell(m[0]) + ", " + m[5] + " " + cell(m[1]) + "=" + cell(m[2])
-                        + ", " + m[4] + " " + cell(m[2]) + "=" + cell(m[3]) + " => " + e + "<>" + m[4]
-                        + " | HoDoKu: " + step.toString(2);
+                if (matches(step, w)) return describe(m, w) + " | HoDoKu: " + step.toString(2);
             }
         }
         return null;
