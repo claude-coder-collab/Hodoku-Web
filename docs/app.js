@@ -18,7 +18,8 @@ const WINGS = [
   { key: 'XY_WING', label: 'XY-Wing' },
   { key: 'XYZ_WING', label: 'XYZ-Wing' },
   { key: 'W_WING', label: 'W-Wing' },
-  { key: 'M_WING', label: 'M-Wing' }
+  { key: 'M_WING', label: 'M-Wing' },
+  { key: 'L_WING', label: 'L-Wing' }
 ];
 
 const TURBOT = [

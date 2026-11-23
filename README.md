@@ -14,7 +14,7 @@ Live page: https://claude-coder-collab.github.io/Hodoku-Web/
 
 ## Generator
 
-The second page, https://claude-coder-collab.github.io/Hodoku-Web/generator.html, generates puzzles whose first advanced step is the chosen technique (X-Wing, Swordfish, Jellyfish; basic, finned, sashimi, etc.), wing (XY-Wing, XYZ-Wing, W-Wing, M-Wing) or turbot fish (Skyscraper, 2-String Kite, etc.), and exports them as a text file or as QR codes to scan with a phone, one puzzle per code, shown one at a time.
+The second page, https://claude-coder-collab.github.io/Hodoku-Web/generator.html, generates puzzles whose first advanced step is the chosen technique (X-Wing, Swordfish, Jellyfish; basic, finned, sashimi, etc.), wing (XY-Wing, XYZ-Wing, W-Wing, M-Wing, L-Wing) or turbot fish (Skyscraper, 2-String Kite, etc.), and exports them as a text file or as QR codes to scan with a phone, one puzzle per code, shown one at a time.
 
 ## How it works
 
@@ -38,4 +38,9 @@ cp target/js/fishgen.wasm ../docs/
 
 `FishGen.java` is the original command-line harness used to build `fish_puzzles.txt`.
 
-HoDoKu has no M-Wing, so `web/overlay/root/MWing.java` searches for one when the generator stalls: a bivalue cell {x,y}, a cell that sees it with y, a strong link on y to a cell with x, and a strong link on x to a final cell. x is eliminated from cells that see both the bivalue cell and the final cell. A puzzle is kept only if HoDoKu's chain finders (X/XY-chains, nice loops, AICs) find a chain through the same four cells with the same eliminations; that step is added to the answer.
+HoDoKu has no M-Wing or L-Wing, so `web/overlay/root/Wings.java` searches for them when the generator stalls:
+
+- M-Wing: bivalue {x,y}, weak link on y in a house, bilocal y, weak link in a cell, bilocal x. x is eliminated from cells that see both ends.
+- L-Wing: bilocal x, weak link in a cell, bilocal y, weak link in a cell, bilocal z, with x, y, z different and the two end cells seeing each other. z is eliminated from the first end and x from the last.
+
+A puzzle is kept only if HoDoKu's chain finders (X/XY-chains, nice loops, AICs) find a chain through the same four cells with the same eliminations; that step is added to the answer.
