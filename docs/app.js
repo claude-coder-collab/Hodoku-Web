@@ -249,6 +249,7 @@ downloadBtn.onclick = () => {
 };
 
 let qrIndex = -1;
+let showStep = false;
 
 function showQr(i) {
   if (!results.length) return;
@@ -261,13 +262,27 @@ function showQr(i) {
   qrBox.innerHTML =
     '<div class="qrtitle"></div><div class="qrgrade"></div><figure></figure>' +
     '<div class="row qrnav"><button type="button">Previous</button><span></span><button type="button">Next</button></div>' +
-    '<div class="row qrnav"><button type="button">Copy</button><a class="btnlink" target="_blank" rel="noopener">Open in hinter</a><button type="button">Close</button></div>';
+    '<div class="row qrnav"><button type="button">Copy</button><a class="btnlink" target="_blank" rel="noopener">Open in hinter</a><button type="button">Close</button></div>' +
+    '<div class="row qrnav"><button type="button"></button></div><div class="qrstep"></div>';
   qrBox.querySelector('.qrtitle').textContent = names[r.type] || r.type;
   qrBox.querySelector('.qrgrade').textContent = r.level ? 'HoDoKu grade: ' + r.level + ' (score ' + r.score + ')' : '';
   qrBox.querySelector('figure').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
   qrBox.querySelector('span').textContent = 'Puzzle ' + (qrIndex + 1) + ' of ' + results.length;
   qrBox.querySelector('a').href = './?p=' + encodeURIComponent(text);
-  const [prev, next, copy, close] = qrBox.querySelectorAll('button');
+  const [prev, next, copy, close, toggle] = qrBox.querySelectorAll('button');
+  const step = qrBox.querySelector('.qrstep');
+  const answer = r.answer || '';
+  const cut = answer.indexOf(' | HoDoKu: ');
+  step.textContent = cut < 0 ? answer : answer.slice(cut + 11);
+  const renderStep = () => {
+    step.hidden = !showStep;
+    toggle.textContent = showStep ? 'Hide technique' : 'Show technique';
+  };
+  renderStep();
+  toggle.onclick = () => {
+    showStep = !showStep;
+    renderStep();
+  };
   prev.onclick = () => showQr(qrIndex - 1);
   next.onclick = () => showQr(qrIndex + 1);
   close.onclick = hideQr;
