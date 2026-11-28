@@ -64,14 +64,14 @@ public class WebEntry {
             SolutionStep step = solver.getHint(s, false);
             SolutionType t = step == null ? null : step.getType();
             if (t == null || !isEasy(t) && !isTarget(t)) {
-                boolean first = Math.random() < 0.5;
-                String w = Wings.find(s, first);
-                boolean m = first;
-                if (w == null) {
-                    m = !first;
-                    w = Wings.find(s, m);
+                String kinds = "MLS";
+                int start = (int) (Math.random() * 3);
+                for (int k = 0; k < 3; k++) {
+                    char kind = kinds.charAt((start + k) % 3);
+                    String w = Wings.find(s, kind);
+                    if (w != null) return kind + "_WING\t" + clues + "\t" + w + "\t" + rate(puzzle);
                 }
-                return w == null ? "" : (m ? "M_WING" : "L_WING") + "\t" + clues + "\t" + w + "\t" + rate(puzzle);
+                return "";
             }
             if (isTarget(t)) {
                 return t.name() + "\t" + clues + "\t" + step.toString(2) + "\t" + rate(puzzle);
